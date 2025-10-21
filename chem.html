@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Organic Chemistry — Purification & Quantitative Analysis (Glassmorphic)</title>
+  <style>
+    :root{
+      --bg:#050507;
+      --panel: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.06);
+      --accent:#00d0ff;
+      --muted:#cbd5e1;
+      --text:#eef2f7;
+      --radius:14px;
+      --max-width:1100px;
+      --transition:300ms cubic-bezier(.2,.9,.25,1);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#040406 0%, #07070a 60%);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+    .app{display:grid;grid-template-columns:260px 1fr;gap:24px;padding:24px;min-height:100vh;box-sizing:border-box}
+
+    /* Sidebar */
+    .sidebar{width:240px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+    .brand{font-weight:700;color:var(--text);letter-spacing:0.06em;margin-bottom:12px;font-size:14px}
+    .sidebar .search{display:flex;gap:8px;margin-bottom:12px}
+    .search input{flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted);outline:none}
+    .slides-list{list-style:none;padding:6px;margin:0;display:flex;flex-direction:column;gap:6px;max-height:72vh;overflow:auto}
+    .slides-list button{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:transparent;border:1px solid transparent;color:var(--muted);text-align:left;cursor:pointer}
+    .slides-list button:focus{outline:3px solid rgba(0,208,255,0.12)}
+    .slides-list button.active{background:linear-gradient(90deg, rgba(0,208,255,0.06), rgba(0,208,255,0.02));border:1px solid rgba(0,208,255,0.08);color:var(--text)}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* Main */
+    .main{display:flex;flex-direction:column;gap:18px;align-items:center}
+    .topbar{width:100%;max-width:var(--max-width);display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-border);backdrop-filter:blur(10px)}
+    .topbar .title{font-weight:700;font-size:18px}
+    .topbar .meta{display:flex;gap:12px;align-items:center}
+    .counter{background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:13px}
+
+    .stage{width:100%;max-width:var(--max-width);min-height:64vh;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:28px;box-sizing:border-box;border:1px solid var(--glass-border);backdrop-filter:blur(14px);position:relative;overflow:auto}
+
+    .slide{opacity:0;transform:translateY(8px) scale(.995);transition:opacity var(--transition),transform var(--transition);display:none}
+    .slide.active{opacity:1;transform:translateY(0) scale(1);display:block}
+
+    .slide h1{margin:0;font-size:28px;color:var(--text);letter-spacing:-0.02em}
+    .slide h2{margin:6px 0 12px;font-size:20px;color:var(--accent)}
+    .slide p{margin:0 0 14px;color:var(--muted);line-height:1.6}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.03);padding:14px;border-radius:12px;margin-top:12px}
+    .card summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid transparent;color:var(--muted)}
+    .card summary:focus{outline:3px solid rgba(0,208,255,0.08)}
+    .card[open] summary{color:var(--text);border:1px solid rgba(0,208,255,0.06);background:linear-gradient(90deg, rgba(0,208,255,0.03), rgba(255,255,255,0.01))}
+    details p{margin:10px 0 0;color:var(--muted)}
+
+    .controls{display:flex;gap:12px;align-items:center}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .btn:focus{outline:3px solid rgba(0,208,255,0.08)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#5ee0ff);color:#021018;border:1px solid rgba(255,255,255,0.06);font-weight:600}
+
+    .progress{width:300px;height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#39bdf0);width:0}
+
+    .bottombar{width:100%;max-width:var(--max-width);display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:12px;background:transparent}
+
+    @media (max-width:900px){.app{grid-template-columns:1fr;padding:12px}.sidebar{display:none}.stage{min-height:62vh}.topbar{padding:10px}}
+
+    :focus{outline:none}
+    .focus-visible{box-shadow:0 0 0 3px rgba(0,208,255,0.08);border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+
+    <aside class="sidebar" aria-label="Slide navigation">
+      <div class="brand">Organic Chemistry — Purification & Quantitative Analysis</div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Search topics..." aria-label="Search slides" />
+      </div>
+
+      <nav>
+        <ul class="slides-list" id="slides-list"></ul>
+      </nav>
+
+      <div style="margin-top:12px;font-size:12px;color:var(--muted)">Tip: press <kbd style="background:#0b1112;padding:4px;border-radius:6px">→</kbd> / <kbd style="background:#0b1112;padding:4px;border-radius:6px">←</kbd> to navigate — <kbd style="background:#0b1112;padding:4px;border-radius:6px">M</kbd> to toggle menu</div>
+    </aside>
+
+    <main class="main" id="main">
+      <header class="topbar" role="banner">
+        <div>
+          <div class="title" id="slide-title">Organic Chemistry</div>
+          <div class="small" id="slide-sub">Purification & Quantitative Analysis (Sections 8.8.1–8.10.5)</div>
+        </div>
+        <div class="meta">
+          <div class="counter" id="counter">1 / 20</div>
+          <div class="controls">
+            <button class="btn" id="prev" aria-label="Previous slide">← Prev</button>
+            <button class="btn primary" id="next" aria-label="Next slide">Next →</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="stage" id="stage" role="region" aria-live="polite"></section>
+
+      <div class="bottombar">
+        <div class="small">Black glassmorphic — clear, accessible, study-focused</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
+          <div style="width:12px"></div>
+          <div class="small" id="progress-text">0%</div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const slidesData = [
+      {title:'Title', subtitle:'Organic Chemistry — Purification & Quantitative Analysis', icon:'⚛️', html:`<p style="font-weight:600">Comprehensive coverage of purification techniques and quantitative analysis methods (Sections 8.8.1 – 8.10.5).</p><p>Use the sidebar to jump to any topic. Expand cards for full details and equations.</p>`},
+
+      {title:'Introduction to Purification', subtitle:'Why purification matters', icon:'🧪', html:`<p>Organic compounds from natural sources or synthesis often contain impurities. Purification ensures accurate characterization, reliable reactions, and safe handling.</p>
+        <details class="card"><summary aria-expanded="false">Key considerations when choosing a method</summary><div><p>- Nature of compound (volatile, sublimable, soluble)  •  - Type of impurities (volatile, non-volatile, colored, similar solubility)  •  - Thermal stability and sensitivity to acid/base.</p></div></details>`},
+
+      {title:'Sublimation', subtitle:'Principle & use', icon:'❄️', html:`<p><strong>Definition:</strong> Direct transition of a solid to vapor and back to solid without a liquid phase, used to purify sublimable solids.</p>
+        <details class="card"><summary aria-expanded="false">Practical notes & examples</summary><div>
+          <p>Common examples: Camphor, naphthalene, benzoic acid (when appropriate), iodine, anthracene, ammonium chloride.</p>
+          <p><strong>Apparatus:</strong> China dish with inverted funnel or dedicated sublimation setup with a cold finger condenser.</p>
+          <p><strong>Tips:</strong> Use gentle heating; collect condensed material on a cool surface; remove non-sublimable impurities from the base.</p>
+        </div></details>`},
+
+      {title:'Crystallisation', subtitle:'Purification by solubility', icon:'🔬', html:`<p><strong>Principle:</strong> Pure compounds crystallize from a nearly saturated hot solution on cooling; soluble impurities remain in the mother liquor.</p>
+        <details class="card"><summary aria-expanded="false">Process & practical tips</summary><div>
+          <p>1. Choose a solvent where the compound is sparingly soluble at room temperature but appreciably soluble when hot.</p>
+          <p>2. Dissolve impure solid in minimum hot solvent and perform hot filtration to remove insolubles.</p>
+          <p>3. Cool slowly to maximize crystal quality; filter, wash with cold solvent and dry.</p>
+          <p>4. Use activated charcoal to remove colored impurities prior to filtration.</p>
+          <p>5. Recrystallize repeatedly if impurities have similar solubility.</p>
+        </div></details>`},
+
+      {title:'Distillation — Overview', subtitle:'Separate liquids by boiling point', icon:'⚗️', html:`<p>Distillation separates volatile components from non-volatile impurities or other liquids based on boiling point differences.</p>
+        <details class="card"><summary aria-expanded="false">When to use which distillation</summary><div>
+          <p>Choose simple, fractional, reduced-pressure, or steam distillation depending on b.p. differences and thermal stability.</p>
+        </div></details>`},
+
+      {title:'Simple Distillation', subtitle:'b.p. difference & method', icon:'🔥', html:`<p>Used when boiling points differ significantly (typically >25°C). Heat the mixture, condense and collect lower boiling component first.</p>
+        <details class="card"><summary aria-expanded="false">Example</summary><div>
+          <p>Chloroform (b.p. 334 K) can be separated from aniline (b.p. 457 K) by simple distillation.</p>
+        </div></details>`},
+
+      {title:'Fractional Distillation', subtitle:'For close boiling points', icon:'🏗️', html:`<p>When b.p. difference is small (<25°C), use a fractionating column to provide multiple theoretical plates (repeated vaporization-condensation steps).</p>
+        <details class="card"><summary aria-expanded="false">Notes</summary><div>
+          <p>Fractionating columns can be packed (glass beads, metal) to improve separation. Widely used in petroleum refining.</p>
+        </div></details>`},
+
+      {title:'Distillation under Reduced Pressure', subtitle:'Lower the boiling point', icon:'⬇️', html:`<p>Used for high boiling or thermally sensitive compounds. Lower external pressure to boil at a reduced temperature using vacuum pumps.</p>
+        <details class="card"><summary aria-expanded="false">Example & tip</summary><div>
+          <p>Glycerol separation from spent-lye can use reduced-pressure distillation to avoid decomposition.</p>
+        </div></details>`},
+
+      {title:'Steam Distillation', subtitle:'For steam-volatile immiscible compounds', icon:'💨', html:`<p>Steam distillation separates steam-volatile, water-immiscible organic compounds by co-distillation with water; useful when direct distillation would decompose the compound.</p>
+        <details class="card"><summary aria-expanded="false">Principle</summary><div>
+          <p>Boiling occurs when p₁ + p₂ = p_atm, so the mixture vaporizes below the compound's normal boiling point.</p>
+          <p>Example: Separation of aniline from a mixture with water.</p>
+        </div></details>`},
+
+      {title:'Differential Extraction', subtitle:'Liquid–liquid extraction', icon:'🧬', html:`<p>Separate a compound from aqueous medium by choosing an immiscible organic solvent in which the compound is more soluble.</p>
+        <details class="card"><summary aria-expanded="false">Procedure & continuous extraction</summary><div>
+          <p>1. Shake aqueous solution with organic solvent (ether, chloroform, benzene).</p>
+          <p>2. Allow layers to separate and collect the organic layer using a separatory funnel.</p>
+          <p>3. Remove solvent by distillation or evaporation to recover the compound.</p>
+          <p><strong>Continuous extraction (Soxhlet):</strong> Use when solubility in the solvent is low — solvent is repeatedly cycled.</p>
+        </div></details>`},
+
+      {title:'Chromatography — Overview', subtitle:'Separation on stationary phase', icon:'📊', html:`<p>Chromatography separates components based on differential partitioning or adsorption between a stationary and a mobile phase.</p>
+        <details class="card"><summary aria-expanded="false">Applications</summary><div>
+          <p>Purification, separation of complex mixtures, monitoring reaction progress, and testing purity.</p>
+        </div></details>`},
+
+      {title:'Adsorption Chromatography', subtitle:'Column & TLC', icon:'🧪', html:`<p>Relies on adsorption differences to a solid adsorbent such as silica gel or alumina.</p>
+        <details class="card"><summary aria-expanded="false">Column Chromatography</summary><div>
+          <p>Column packed with adsorbent; mixture loaded at top; eluant flows down; components separate by affinity to adsorbent.</p>
+        </div></details>
+        <details class="card"><summary aria-expanded="false">Thin Layer Chromatography (TLC)</summary><div>
+          <p>Small sample spotted on a TLC plate; solvent rises by capillarity; Rf = distance moved by substance / distance moved by solvent. Visualize colored spots or use UV/Iodine/specific reagents.</p>
+        </div></details>`},
+
+      {title:'Partition Chromatography', subtitle:'Paper chromatography', icon:'📄', html:`<p>Based on partitioning between stationary (paper with trapped water) and mobile liquid phases.</p>
+        <details class="card"><summary aria-expanded="false">Procedure</summary><div>
+          <p>Suspend a spotted paper strip in solvent; as solvent rises, components separate to give a chromatogram; detect colored spots or use UV/reagents for colorless compounds.</p>
+        </div></details>`},
+
+      {title:'Qualitative Analysis — C & H', subtitle:'Detection using CuO', icon:'🔬', html:`<p>Heat compound with copper(II) oxide to oxidize carbon to CO₂ and hydrogen to H₂O.</p>
+        <details class="card"><summary aria-expanded="false">Reactions & observations</summary><div>
+          <p>C + 2CuO → 2Cu + CO₂ — CO₂ turns lime water (Ca(OH)₂) turbid (CaCO₃).</p>
+          <p>2H + CuO → Cu + H₂O — H₂O turns anhydrous CuSO₄ from white to blue (CuSO₄·5H₂O).</p>
+        </div></details>`},
+
+      {title:"Lassaigne's Test", subtitle:'Detection of N, S, Halogens, P', icon:'🧪', html:`<p>Fuse the organic compound with sodium to convert covalently bound elements into ionic forms (NaCN, Na₂S, NaX, Na₃P).</p>
+        <details class="card"><summary aria-expanded="false">Sodium fusion — key reactions</summary><div>
+          <p>Na + C + N → NaCN; 2Na + S → Na₂S; Na + X → NaX (X = Cl, Br, I); 3Na + P → Na₃P.</p>
+        </div></details>
+        <details class="card"><summary aria-expanded="false">Tests for Nitrogen</summary><div>
+          <p>Extract fusion product with water, add FeSO₄, boil, then acidify with H₂SO₄ — Prussian blue indicates nitrogen.</p>
+          <p>6CN⁻ + Fe²⁺ → [Fe(CN)₆]⁴⁻; 3[Fe(CN)₆]⁴⁻ + 4Fe³⁺ → Fe₄[Fe(CN)₆]₃ (Prussian blue).</p>
+          <p>If N & S both present, thiocyanates can give blood-red with Fe³⁺ instead of Prussian blue.</p>
+        </div></details>
+        <details class="card"><summary aria-expanded="false">Tests for Sulfur</summary><div>
+          <p>Method 1: Acidify and add Pb²⁺ — black PbS precipitate indicates S.</p>
+          <p>Method 2: Treat with sodium nitroprusside — violet color indicates S.</p>
+        </div></details>
+        <details class="card"><summary aria-expanded="false">Tests for Halogens</summary><div>
+          <p>Acidify extract with HNO₃ and add AgNO₃. AgCl white (soluble in NH₄OH), AgBr pale yellow (sparingly soluble), AgI yellow (insoluble in NH₄OH).</p>
+        </div></details>
+        <details class="card"><summary aria-expanded="false">Test for Phosphorus</summary><div>
+          <p>Oxidize phosphorus to phosphate (e.g., using sodium peroxide), acidify and add ammonium molybdate → yellow ammonium phosphomolybdate indicates P.</p>
+        </div></details>`},
+
+      {title:'Quantitative Analysis — Overview', subtitle:'Mass percent determination', icon:'📐', html:`<p>Quantitative analysis determines mass percent of elements — critical for empirical/molecular formula determination.</p>
+        <details class="card"><summary aria-expanded="false">Methods covered</summary><div>
+          <p>Carbon & Hydrogen (Liebig's combustion), Nitrogen (Dumas & Kjeldahl), Halogens/Sulfur/Phosphorus (Carius method).</p>
+        </div></details>`},
+
+      {title:'Carbon & Hydrogen — Combustion', subtitle:'Liebig method', icon:'🔥', html:`<p>Burn a known mass of compound with CuO in excess oxygen; CO₂ and H₂O are absorbed and weighed to calculate %C and %H.</p>
+        <details class="card"><summary aria-expanded="false">Procedure & formulas</summary><div>
+          <p>H₂O absorbed by anhydrous CaCl₂; CO₂ absorbed by conc. KOH. %C = (12/44) × (mass CO₂ / mass sample) × 100. %H = (2/18) × (mass H₂O / mass sample) × 100.</p>
+        </div></details>`},
+
+      {title:'Nitrogen — Dumas Method', subtitle:'Measure N₂ volume', icon:'🧾', html:`<p>Dumas: heat compound with CuO; collect N₂ after removing CO₂ (KOH). Measure volume at STP to compute %N.</p>
+        <details class="card"><summary aria-expanded="false">Key formula</summary><div>
+          <p>%N = (28 × V_N2_at_STP) / (22400 × mass_sample) × 100. (V in mL, mass in g; convert units appropriately.)</p>
+        </div></details>`},
+
+      {title:'Nitrogen — Kjeldahl Method', subtitle:'Digest to ammonium sulfate', icon:'🧪', html:`<p>Kjeldahl: digest compound with conc. H₂SO₄ to convert organic N to (NH₄)₂SO₄. After neutralization with NaOH, distil NH₃ into standard acid and back-titrate to find N content.</p>
+        <details class="card"><summary aria-expanded="false">Limitations & formula</summary><div>
+          <p>Not suitable for nitro, azo, or certain heterocyclic nitrogens. %N calculated from titration data. Use standard Kjeldahl calculations; example formula in notes.</p>
+        </div></details>`},
+
+      {title:'Halogens — Carius Method', subtitle:'AgX gravimetry', icon:'🧫', html:`<p>Heat with fuming HNO₃ and AgNO₃ in sealed Carius tube; halogens convert to AgX, which is weighed.</p>
+        <details class="card"><summary aria-expanded="false">Formula</summary><div>
+          <p>%X = (atomic mass of X / mol mass of AgX) × (mass AgX / mass sample) × 100.</p>
+        </div></details>`},
+
+      {title:'Sulfur — Carius Method', subtitle:'BaSO₄ gravimetry', icon:'⚗️', html:`<p>Oxidize sulfur to sulfate; precipitate as BaSO₄ with BaCl₂; filter, dry, weigh.</p>
+        <details class="card"><summary aria-expanded="false">Formula</summary><div>
+          <p>%S = (32 / mol mass BaSO₄) × (mass BaSO₄ / mass sample) × 100.</p>
+        </div></details>`},
+
+      {title:'Phosphorus — Gravimetry', subtitle:'Ammonium phosphomolybdate or Mg2P2O7', icon:'🔬', html:`<p>Oxidize P to phosphate; precipitate as ammonium phosphomolybdate or as MgNH4PO4 (later ignited to Mg2P2O7) and weigh to determine %P.</p>
+        <details class="card"><summary aria-expanded="false">Formulas</summary><div>
+          <p>As ammonium phosphomolybdate: %P = (31 / M_mol_ammonium_phosphomolybdate) × (mass_precip / mass_sample) × 100.</p>
+          <p>As Mg2P2O7: %P = (62 / M_mol_Mg2P2O7) × (mass_Mg2P2O7 / mass_sample) × 100.</p>
+        </div></details>`},
+
+      {title:'Summary & Best Practices', subtitle:'Quick reference', icon:'📎', html:`<p><strong>Choose method based on:</strong> volatility, solubility, thermal stability, and impurity type.</p>
+        <details class="card"><summary aria-expanded="false">Practical checklist</summary><div>
+          <ul>
+            <li>Read compound safety data and decomposition points.</li>
+            <li>Prefer milder methods when thermal sensitivity suspected.</li>
+            <li>Use TLC to monitor purity during purification steps.</li>
+            <li>Document yields and losses at each step for reproducibility.</li>
+          </ul>
+        </div></details>`},
+
+      {title:'References', subtitle:'For further reading', icon:'📚', html:`<p>Classic textbooks and lab manuals on organic analysis and practical organic chemistry are recommended (e.g., Vogel's Textbook of Practical Organic Chemistry, Analytical Chemistry texts).</p>
+        <details class="card"><summary aria-expanded="false">Suggested readings</summary><div>
+          <p>- Vogel, \"Vogel's Textbook of Practical Organic Chemistry\"  •  - Experimental Organic Chemistry lab manuals  •  - Analytical Chemistry textbooks for gravimetric methods.</p>
+        </div></details>`}
+    ];
+
+    const slidesList = document.getElementById('slides-list');
+    const stage = document.getElementById('stage');
+    const titleEl = document.getElementById('slide-title');
+    const subEl = document.getElementById('slide-sub');
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const searchInput = document.getElementById('search');
+
+    let currentIndex = 0;
+
+    function renderSidebar(filter = ''){
+      slidesList.innerHTML='';
+      slidesData.forEach((s, i) => {
+        if(filter && !(s.title.toLowerCase().includes(filter) || s.subtitle.toLowerCase().includes(filter))) return;
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.innerHTML = `<span style="width:28px;display:inline-block;text-align:center">${s.icon}</span><div style="flex:1;text-align:left"><div style="font-weight:600;color:var(--muted)">${s.title}</div><div class="small">${s.subtitle}</div></div>`;
+        btn.setAttribute('data-index', i);
+        btn.setAttribute('aria-label', `Go to slide ${i+1} ${s.title}`);
+        btn.addEventListener('click', () => { goToSlide(i); if(window.innerWidth<=900) toggleSidebar(false); });
+        btn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ goToSlide(i); if(window.innerWidth<=900) toggleSidebar(false);} });
+        li.appendChild(btn);
+        slidesList.appendChild(li);
+      });
+
+      Array.from(slidesList.querySelectorAll('button')).forEach(b=>{
+        if(parseInt(b.dataset.index)===currentIndex) b.classList.add('active'); else b.classList.remove('active');
+      });
+    }
+
+    function renderSlides(){
+      stage.innerHTML='';
+      slidesData.forEach((s,i)=>{
+        const slide = document.createElement('article');
+        slide.className='slide';
+        slide.setAttribute('data-index', i);
+        slide.setAttribute('tabindex', '-1');
+        slide.innerHTML = `<h1>${s.title}</h1><h2>${s.subtitle}</h2>${s.html}`;
+        stage.appendChild(slide);
+      });
+      updateView();
+    }
+
+    function updateView(){
+      const slides = stage.querySelectorAll('.slide');
+      slides.forEach((el, idx)=>{
+        el.classList.toggle('active', idx===currentIndex);
+      });
+      const s = slidesData[currentIndex];
+      titleEl.textContent = s.title;
+      subEl.textContent = s.subtitle;
+      counter.textContent = `${currentIndex+1} / ${slidesData.length}`;
+      updateProgress();
+      focusSlide();
+      renderSidebar(searchInput.value.trim().toLowerCase());
+
+      const details = stage.querySelectorAll('details');
+      details.forEach(d=>{
+        const summary = d.querySelector('summary');
+        summary.setAttribute('role','button');
+        summary.addEventListener('click', ()=>{ const expanded = d.hasAttribute('open'); summary.setAttribute('aria-expanded', String(!expanded)); });
+      });
+    }
+
+    function updateProgress(){
+      const pct = Math.round(((currentIndex+1)/slidesData.length)*100);
+      progress.style.width = pct + '%';
+      progressText.textContent = pct + '%';
+    }
+
+    function focusSlide(){
+      const active = stage.querySelector('.slide.active');
+      if(active){ active.focus(); }
+    }
+
+    function goToSlide(i){ if(i<0) i=0; if(i>slidesData.length-1) i=slidesData.length-1; currentIndex=i; updateView(); }
+
+    document.getElementById('next').addEventListener('click', ()=>{ goToSlide(currentIndex+1); });
+    document.getElementById('prev').addEventListener('click', ()=>{ goToSlide(currentIndex-1); });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='ArrowRight'){ e.preventDefault(); goToSlide(currentIndex+1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); goToSlide(currentIndex-1); }
+      else if(e.key.toLowerCase()==='m'){ const aside = document.querySelector('.sidebar'); if(window.innerWidth<=900) toggleSidebar(); else aside.scrollTop = 0; }
+      else if(e.key==='Home'){ goToSlide(0); }
+      else if(e.key==='End'){ goToSlide(slidesData.length-1); }
+    });
+
+    function toggleSidebar(force){
+      const aside = document.querySelector('.sidebar');
+      if(window.innerWidth<=900){
+        if(force===false) { aside.style.display='none'; }
+        else { aside.style.display = (aside.style.display==='none' || !aside.style.display)?'block':'none'; }
+      }
+    }
+
+    searchInput.addEventListener('input',(e)=>{ renderSidebar(e.target.value.trim().toLowerCase()); });
+
+    renderSlides();
+
+    document.addEventListener('keyup', (e)=>{
+      if(e.key==='Enter' && document.activeElement && document.activeElement.tagName==='SUMMARY'){
+        document.activeElement.click();
+      }
+    });
+
+    window.addEventListener('resize', ()=>{ updateProgress(); if(window.innerWidth>900) document.querySelector('.sidebar').style.display='block'; });
+    document.addEventListener('keydown',(e)=>{ if(e.key==='Tab') document.body.classList.add('user-is-tabbing'); });
+    renderSidebar();
+
+  </script>
+</body>
+</html>
